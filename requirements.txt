@@ -1,0 +1,10 @@
+pandas
+openpyxl
+numpy
+matplotlib
+librosa
+soundfile
+scipy
+jupyter
+streamlit
+

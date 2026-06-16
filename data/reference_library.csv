@@ -1,0 +1,6 @@
+reference_id,mcid,title,segment,language,audio_file,duration_sec,source_url,notes
+jfp_eng_birth_jesus_public,1_jf6102-0-0,Birth of Jesus,Birth of Jesus,English,data/reference_audio/birth_of_jesus_english.wav,223,https://www.jesusfilm.org/watch/birth-of-jesus-2.html/english.html,Public Jesus Film Project chapter page.
+jfp_eng_jesus_full_public,1_jf-0-0,JESUS,Full Film,English,data/reference_audio/jesus_full_film_english.wav,7674,https://www.jesusfilm.org/watch/jesus.html/english.html,Public Jesus Film Project feature film page.
+jfp_eng_beginning_public,1_jf6101-0-0,JESUS,The Beginning,English,data/reference_audio/the_beginning_english.wav,488,https://www.jesusfilm.org/watch/jesus.html/the-beginning/english.html,Public Jesus Film Project chapter page.
+jfp_eng_childhood_public,1_jf6103-0-0,JESUS,Childhood of Jesus,English,data/reference_audio/childhood_of_jesus_english.wav,135,https://www.jesusfilm.org/watch/jesus.html/childhood-of-jesus/english.html,Public Jesus Film Project chapter page.
+jfp_eng_baptism_john_public,1_jf6104-0-0,JESUS,Baptism of Jesus by John,English,data/reference_audio/baptism_of_jesus_by_john_english.wav,227,https://www.jesusfilm.org/watch/jesus.html/baptism-of-jesus-by-john/english.html,Public Jesus Film Project chapter page.

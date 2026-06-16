@@ -1,0 +1,18 @@
+.DS_Store
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Local Streamlit runtime state
+.streamlit_home/
+
+# Do not publish claim workbooks or extracted private/large audio by default.
+data/claims/*.xlsx
+data/claims/*.csv
+data/claim_samples.csv
+data/reference_audio/*
+!data/reference_audio/.gitkeep
+data/claim_audio/*
+!data/claim_audio/.gitkeep
+outputs/*
+!outputs/.gitkeep
