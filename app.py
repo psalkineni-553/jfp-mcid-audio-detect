@@ -18,6 +18,7 @@ from src.fingerprint_matcher import (
 PROJECT_ROOT = Path(__file__).resolve().parent
 REFERENCE_LIBRARY = PROJECT_ROOT / "data" / "reference_library.csv"
 CLAIM_SAMPLES = PROJECT_ROOT / "data" / "claim_samples.csv"
+APP_VERSION = "Strict matching v2"
 
 
 st.set_page_config(page_title="MCID Audio Detect", page_icon="🎧", layout="wide")
@@ -109,7 +110,7 @@ def render_results(results) -> None:
 
 
 st.title("Shazam-Style MCID Audio Detect")
-st.caption("Short audio sample in. Suggested JFP Media Component ID out.")
+st.caption(f"Short audio sample in. Suggested JFP Media Component ID out. {APP_VERSION}")
 
 reference_df = load_reference_table()
 missing_files = missing_reference_files(reference_df) if not reference_df.empty else []
