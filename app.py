@@ -7,6 +7,7 @@ import pandas as pd
 import streamlit as st
 
 from src.fingerprint_matcher import (
+    ReferenceTrack,
     build_reference_index,
     confidence_from_results,
     load_reference_library,
@@ -64,6 +65,13 @@ def missing_reference_files(reference_df: pd.DataFrame) -> list[Path]:
     return missing
 
 
+def save_uploaded_audio(uploaded_audio) -> Path:
+    suffix = Path(uploaded_audio.name).suffix or ".wav"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+        temp_file.write(uploaded_audio.getbuffer())
+        return Path(temp_file.name)
+
+
 def render_results(results) -> None:
     confidence, action = confidence_from_results(results)
     top = results[0] if results else None
@@ -100,58 +108,107 @@ st.title("Shazam-Style MCID Audio Detect")
 st.caption("Short audio sample in. Suggested JFP Media Component ID out.")
 
 reference_df = load_reference_table()
-if reference_df.empty:
-    st.error("Missing reference library. Add data/reference_library.csv first.")
-    st.stop()
-
-missing_files = missing_reference_files(reference_df)
+missing_files = missing_reference_files(reference_df) if not reference_df.empty else []
 
 with st.sidebar:
     st.header("Reference Library")
-    st.write(f"{len(reference_df)} reference items")
-    st.dataframe(
-        reference_df[["mcid", "title", "segment", "language", "audio_file"]],
-        hide_index=True,
-        use_container_width=True,
-    )
+    st.write(f"{len(reference_df)} saved reference items")
+
+    if not reference_df.empty:
+        st.dataframe(
+            reference_df[["mcid", "title", "segment", "language", "audio_file"]],
+            hide_index=True,
+            use_container_width=True,
+        )
 
     if missing_files:
-        st.warning("Add the missing reference audio files before detecting.")
+        st.warning("Saved-library mode needs these files.")
         for path in missing_files:
             st.code(str(path))
 
-if missing_files:
-    st.info("The app is ready, but detection needs the reference audio files listed in the sidebar.")
-    st.stop()
+tab_quick, tab_library, tab_existing = st.tabs(
+    ["Quick Shazam Test", "Saved Reference Library", "Saved Claim Samples"]
+)
 
-with st.spinner("Preparing audio fingerprints..."):
-    index, track_by_id = load_reference_index(REFERENCE_LIBRARY.stat().st_mtime)
+with tab_quick:
+    st.subheader("Upload one known audio and one audio to check")
 
-tab_upload, tab_existing = st.tabs(["Detect Uploaded Sample", "Detect Saved Claim Sample"])
+    left_col, right_col = st.columns(2)
+    with left_col:
+        reference_audio = st.file_uploader(
+            "Known reference audio",
+            type=["wav", "mp3", "m4a", "mp4", "aac", "flac", "ogg"],
+            key="quick_reference_audio",
+        )
+        mcid = st.text_input("Reference MCID", value="1_jf6102-0-0")
+        title = st.text_input("Reference title", value="Birth of Jesus")
+        segment = st.text_input("Reference segment", value="Birth of Jesus")
+        language = st.text_input("Reference language", value="English")
+        if reference_audio is not None:
+            st.audio(reference_audio)
 
-with tab_upload:
-    uploaded_audio = st.file_uploader(
-        "Audio sample",
-        type=["wav", "mp3", "m4a", "mp4", "aac", "flac", "ogg"],
-        label_visibility="collapsed",
-    )
+    with right_col:
+        check_audio = st.file_uploader(
+            "Audio to check",
+            type=["wav", "mp3", "m4a", "mp4", "aac", "flac", "ogg"],
+            key="quick_check_audio",
+        )
+        if check_audio is not None:
+            st.audio(check_audio)
 
-    if uploaded_audio is not None:
-        st.audio(uploaded_audio)
-        if st.button("Find MCID", type="primary"):
-            suffix = Path(uploaded_audio.name).suffix or ".wav"
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
-                temp_file.write(uploaded_audio.getbuffer())
-                temp_path = Path(temp_file.name)
+    if st.button("Find MCID", type="primary", disabled=not reference_audio or not check_audio):
+        reference_path = save_uploaded_audio(reference_audio)
+        check_path = save_uploaded_audio(check_audio)
+        track = ReferenceTrack(
+            reference_id="uploaded_reference",
+            mcid=mcid,
+            title=title,
+            segment=segment,
+            language=language,
+            audio_file=reference_path,
+        )
 
-            with st.spinner("Listening and matching..."):
-                results = match_audio_sample(temp_path, index, track_by_id, top_n=3)
-            render_results(results)
+        with st.spinner("Listening and matching..."):
+            quick_index, quick_track_by_id = build_reference_index([track])
+            results = match_audio_sample(check_path, quick_index, quick_track_by_id, top_n=3)
+        render_results(results)
+
+with tab_library:
+    if reference_df.empty:
+        st.info("Add data/reference_library.csv to use saved reference-library mode.")
+    elif missing_files:
+        st.warning("Saved reference-library mode needs the missing audio files shown in the sidebar.")
+    else:
+        with st.spinner("Preparing saved audio fingerprints..."):
+            index, track_by_id = load_reference_index(REFERENCE_LIBRARY.stat().st_mtime)
+
+        uploaded_audio = st.file_uploader(
+            "Audio sample",
+            type=["wav", "mp3", "m4a", "mp4", "aac", "flac", "ogg"],
+            key="library_check_audio",
+            label_visibility="collapsed",
+        )
+
+        if uploaded_audio is not None:
+            st.audio(uploaded_audio)
+            if st.button("Find MCID from Saved Library", type="primary"):
+                temp_path = save_uploaded_audio(uploaded_audio)
+
+                with st.spinner("Listening and matching..."):
+                    results = match_audio_sample(temp_path, index, track_by_id, top_n=3)
+                render_results(results)
 
 with tab_existing:
-    if not CLAIM_SAMPLES.exists():
+    if reference_df.empty:
+        st.info("Add data/reference_library.csv to use saved claim samples.")
+    elif missing_files:
+        st.warning("Saved claim mode needs the missing reference audio files shown in the sidebar.")
+    elif not CLAIM_SAMPLES.exists():
         st.info("Add data/claim_samples.csv to use saved claim samples.")
     else:
+        with st.spinner("Preparing saved audio fingerprints..."):
+            index, track_by_id = load_reference_index(REFERENCE_LIBRARY.stat().st_mtime)
+
         claim_df = pd.read_csv(CLAIM_SAMPLES).fillna("")
         claim_df["label"] = claim_df.apply(
             lambda row: f"{row['source_file']} row {row['claim_row']} | {row['video_title']}",
@@ -174,4 +231,3 @@ with tab_existing:
         else:
             st.warning("This claim audio file is not in the project yet.")
             st.code(str(selected_audio))
-
