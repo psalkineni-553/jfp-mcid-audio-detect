@@ -18,7 +18,8 @@ from src.fingerprint_matcher import (
 PROJECT_ROOT = Path(__file__).resolve().parent
 REFERENCE_LIBRARY = PROJECT_ROOT / "data" / "reference_library.csv"
 CLAIM_SAMPLES = PROJECT_ROOT / "data" / "claim_samples.csv"
-APP_VERSION = "Strict matching v2"
+APP_VERSION = "Strict matching v3"
+MIN_REVIEW_SCORE = 45.0
 
 
 st.set_page_config(page_title="MCID Audio Detect", page_icon="🎧", layout="wide")
@@ -76,6 +77,8 @@ def save_uploaded_audio(uploaded_audio) -> Path:
 def render_results(results) -> None:
     confidence, action = confidence_from_results(results)
     top = results[0] if results else None
+    if top and top.audio_score < MIN_REVIEW_SCORE:
+        confidence, action = "Weak", "Manual"
     suggested_mcid = top.mcid if top and confidence != "Weak" else "No reliable match"
 
     metric_cols = st.columns(4)
