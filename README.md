@@ -177,8 +177,8 @@ Bryce is working on audio-to-text or language detection. This prototype is audio
 Use this simple first version:
 
 - `Strong`: Top match is high and clearly better than second match
-- `Possible`: Top match is decent, but second match is close
-- `Weak`: No clear audio match
+- `Possible`: Top match is decent, but still needs review
+- `Weak`: No reliable audio match; do not use the MCID suggestion
 
 ## Recommended Actions
 

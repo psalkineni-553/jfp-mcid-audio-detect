@@ -158,9 +158,8 @@ def confidence_from_results(results: list[MatchResult]) -> tuple[str, str]:
     second_score = results[1].audio_score if len(results) > 1 else 0.0
     score_gap = top_score - second_score
 
-    if top_score >= 30 and score_gap >= 10:
+    if top_score >= 70 and score_gap >= 15:
         return "Strong", "Quick confirm"
-    if top_score >= 12:
+    if top_score >= 45:
         return "Possible", "Review"
     return "Weak", "Manual"
-

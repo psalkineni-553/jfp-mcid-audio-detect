@@ -75,9 +75,10 @@ def save_uploaded_audio(uploaded_audio) -> Path:
 def render_results(results) -> None:
     confidence, action = confidence_from_results(results)
     top = results[0] if results else None
+    suggested_mcid = top.mcid if top and confidence != "Weak" else "No reliable match"
 
     metric_cols = st.columns(4)
-    metric_cols[0].metric("Suggested MCID", top.mcid if top else "No match")
+    metric_cols[0].metric("Suggested MCID", suggested_mcid)
     metric_cols[1].metric("Confidence", confidence)
     metric_cols[2].metric("Audio Score", top.audio_score if top else 0)
     metric_cols[3].metric("Action", action)
@@ -85,6 +86,9 @@ def render_results(results) -> None:
     if not results:
         st.warning("No clear match found. Try a longer or cleaner 10-15 second sample.")
         return
+
+    if confidence == "Weak":
+        st.warning("The audio does not have enough evidence for a reliable MCID suggestion.")
 
     result_rows = []
     for rank, result in enumerate(results, start=1):
